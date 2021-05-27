@@ -27,10 +27,6 @@ func MpesaInitialization() {
 	//you can pass a dfault mpesa paybill that will
 	//be used as default for all request that you dont pass a paybill
 	mpesa.SetDefaultB2CShortCode("MPESASHORTCODE")
-
-
-
-
 }
 
 func MpesaInitializationExampleTwo(){
