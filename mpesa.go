@@ -66,7 +66,7 @@ func (m *Mpesa) SetDefaultTimeOut(timeOut time.Duration) {
 
 // SetMode  changes from production to sandbox and viceversa
 //at runtime.
-func (m *Mpesa) SetMode(mode bool) {
+func (m *Mpesa) SetLiveMode(mode bool) {
 	m.Live = mode
 }
 
