@@ -2,6 +2,7 @@ package examples
 
 import (
 	"encoding/json"
+	"fmt"
 	mpesa_go "github.com/ndunyu/mpesa-go"
 	"log"
 	"net/http"
@@ -50,14 +51,13 @@ func MpesaExpressExample() {
 
 }
 
-
 func ExampleProcessingMpesaExpressCallBack(w http.ResponseWriter, r *http.Request) {
 	var stkPushResponseBody mpesa_go.StkPushCallBackResponseBody
 	err := json.NewDecoder(r.Body).Decode(&stkPushResponseBody)
 	if err != nil {
 		log.Println(err)
 		///sentry.CaptureException(err)
-		http.Error(w,"something went wrong",400)
+		http.Error(w, "something went wrong", 400)
 		return
 	}
 	defer r.Body.Close()
@@ -68,15 +68,57 @@ func ExampleProcessingMpesaExpressCallBack(w http.ResponseWriter, r *http.Reques
 		w.WriteHeader(200)
 		return
 	}
-
 	//otherwise Resultcode is 0 so it is a success
-    //It is always wise to send a verification request to
-    //confirm that it is true that this request was actually a success
-    //just to double check
-    //for that you can use the verification api
-    mpesa:=mpesa_go.New("consumerkey","consumersecret",true)
+	//sample of processing received data
+	for _, item := range stkPushResponseBody.Body.StkCallback.CallbackMetadata.Item {
+		switch item.Name {
+		case "Amount":
+			amount, ok := item.Value.(float64)
+			if !ok {
+				log.Fatal("error")
+			}
+			///do something with amount
+			log.Println(amount)
+		case "MpesaReceiptNumber":
+			//this is the mpesa transaction id sent to user
+			//e.g MWYWWUWUWUW
+			str := fmt.Sprintf("%v", item.Value)
+			log.Println(str)
+		case "TransactionDate":
+			date, ok := item.Value.(float64)
 
-    mpesa.StkPushQuery()
+			if !ok {
+				log.Fatal("error")
 
+			}
+			log.Println(date)
+		}
+
+	}
+
+	//It is always wise to send a verification request to
+	//confirm that it is true that this request was actually a success
+	//just to double check
+	//for that you can use the verification api
+	mpesa := mpesa_go.New("consumerkey", "consumersecret", true)
+	//even for this request you dont need to pass key if you already set
+	//a default passkey
+	verification, err := mpesa.StkPushVerification(stkPushResponseBody.Body.StkCallback.CheckoutRequestID, "ShortCODE", "PASS_KEY")
+	if err != nil {
+		///if an error occured
+		///you can retry it again
+		//or store it and retry it later
+		return
+	}
+	if verification.ResultCode == "0" {
+		///this request was a success
+		//and the user actually paid
+		//so award you user the money here
+	} else {
+		//user did not pay
+		//mark it as a failed transaction
+	}
+
+	w.WriteHeader(200)
 
 }
