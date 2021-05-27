@@ -74,8 +74,10 @@ func MpesaExpressExample() {
 		///NOTE if you already set a DefaultB2CShortCode you dont have to
 		//pass the BusinessShortCode if it is empty the default will be used
 		BusinessShortCode: "",
+		//should be a string int
 		Amount:            "",
-		PhoneNumber:       "",
+		//note the format used for phone number
+		PhoneNumber:       "254701047658",
 		//change this to your callback url
 		//when a user pays or payment fails something happens you will receive the response here
 		CallBackURL: "https://send/the/callback/here",
