@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 //Start of Mpesa express models<-----------------------------------------------
@@ -131,6 +132,7 @@ type Item struct {
 type AccessTokenResponse struct {
 	AccessToken string `json:"access_token"`
 	ExpiresIn   string `json:"expires_in"`
+	ExpireTime   time.Time `json:"expire_time"`
 }
 
 //End of access  token<-----------------------------------------------

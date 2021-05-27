@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/patrickmn/go-cache"
+	"go/constant"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -14,6 +16,12 @@ import (
 )
 
 type Mpesa struct {
+	//if set to true the access roken will be reused
+	//until it expires
+	//otherwise each request will always get a new token
+	//which will slow down your requests
+	//the default is true
+	CacheAccessToken bool
 	//For sandbox use false and for production use true
 	Live           bool
 	ConsumerKey    string
@@ -31,22 +39,30 @@ type Mpesa struct {
 	//you are sending a request
 	//this is ideal for those using a single shortcode
 	DefaultC2BShortCode string
+	TokenCache    map[string]AccessTokenResponse
 }
 
 func New(ConsumerKey, ConsumerSecret string, live bool) Mpesa {
+	TokenCache := cache.New(50*time.Minute, 50*time.Minute)
 	return Mpesa{
-		Live:           live,
-		ConsumerKey:    ConsumerKey,
-		ConsumerSecret: ConsumerSecret,
-		DefaultTimeOut: 20 * time.Second,
+		Live:             live,
+		ConsumerKey:      ConsumerKey,
+		ConsumerSecret:   ConsumerSecret,
+		DefaultTimeOut:   20 * time.Second,
+		CacheAccessToken: true,
+		cache:            TokenCache,
 	}
+}
 
+func (m *Mpesa) ShouldCacheAccessToken(shouldCache bool) {
+	m.CacheAccessToken = shouldCache
 }
 
 //SetDefaultB2CShortCode will set the default shortcode
 // to use if you do not provide any
 func (m *Mpesa) SetDefaultB2CShortCode(shortCode string) {
 	m.DefaultC2BShortCode = shortCode
+
 }
 
 //SetDefaultPassKey You can set the default pass key
@@ -61,7 +77,6 @@ func (m *Mpesa) SetDefaultPassKey(passKey string) {
 //the default is 20 seconds when sending an http request
 func (m *Mpesa) SetDefaultTimeOut(timeOut time.Duration) {
 	m.DefaultTimeOut = timeOut
-
 }
 
 // SetMode  changes from production to sandbox and viceversa
@@ -209,6 +224,16 @@ func (m *Mpesa) GetAccessToken() (*AccessTokenResponse, error) {
 	if err := json.NewDecoder(resp.Body).Decode(&token); err != nil {
 
 		return nil, errors.New("error converting from json")
+	}
+
+	if m.cache == nil {
+		m.cache = cache.New(50*time.Minute, 50*time.Minute)
+
+	}
+	if m.CacheAccessToken{
+      //cache the token
+		m.cache.Set(AccessToken,token.)
+		m.cache.Get()
 	}
 
 	return &token, nil
