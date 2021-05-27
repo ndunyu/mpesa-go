@@ -51,7 +51,7 @@ func MpesaExpressExample() {
 
 
 func ExampleProcessingMpesaExpressCallBack(w http.ResponseWriter, r *http.Request) {
-	var stkPushResponseBody mpesa_go.StKPushRe
+	var stkPushResponseBody mpesa_go
 
 
 
