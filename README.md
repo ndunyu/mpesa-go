@@ -14,6 +14,10 @@ func MpesaInitialization() {
 	mpesa := mpesa_go.New("ConsumerKey_preferably_form_environmental_variables", "ConsumerSecret", false)
 	//you can change from sandbox to production at runtime like below
 	mpesa.SetLiveMode(true)
+	//You can cache the access token instead of 
+	//getting a new one for each request
+	//this will increase your speed
+	mpesa.ShouldCacheAccessToken(true)
 
 	//you can set a default timeout for all http request this is optional though
 	//if not set 20 seconds is the default
@@ -46,10 +50,11 @@ func MpesaInitializationExampleTwo(){
 		DefaultTimeOut:      10 * time.Second,
 		DefaultPassKey:      "",
 		DefaultC2BShortCode: "",
+		CacheAccessToken: true,
 	}
 
 	//
-	mpesa2.SetLiveMode(true)
+	mpesa2.ShouldCacheAccessToken(true)
 
 }
 ```
