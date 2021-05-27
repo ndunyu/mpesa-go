@@ -2,6 +2,7 @@ package mpesa_go
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -18,6 +19,18 @@ type Mpesa struct {
 	ConsumerKey    string
 	ConsumerSecret string
 	DefaultTimeOut time.Duration
+	//for those using only one payBill
+	//you can set a default passkey to be used
+	//instead of passing a passkey evey time
+	//when doing an stk push
+	//use SetDefaultPassKey to change default
+	//pass key at runtime.
+	DefaultPassKey string
+	//You can pass the Mpesa shortcode
+	//you want In case you dont to pass the shortcode each time
+	//you are sending a request
+	//this is ideal for those using a single shortcode
+	DefaultC2BShortCode string
 }
 
 func New(ConsumerKey, ConsumerSecret string, live bool) Mpesa {
@@ -30,8 +43,22 @@ func New(ConsumerKey, ConsumerSecret string, live bool) Mpesa {
 
 }
 
-// SetDefaultTimeOut this will set the connection timeout to mpesa the defaul is
-//20 seconds
+//SetDefaultB2CShortCode will set the default shortcode
+// to use if you do not provide any
+func (m *Mpesa) SetDefaultB2CShortCode(shortCode string) {
+	m.DefaultC2BShortCode = shortCode
+}
+
+//SetDefaultPassKey You can set the default pass key
+//Over here so that you dont have to pass it each time
+//You are sending an StkRequest
+func (m *Mpesa) SetDefaultPassKey(passKey string) {
+	m.DefaultPassKey = passKey
+
+}
+
+// SetDefaultTimeOut this will set the connection timeout to Mpesa
+//the default is 20 seconds when sending an http request
 func (m *Mpesa) SetDefaultTimeOut(timeOut time.Duration) {
 	m.DefaultTimeOut = timeOut
 
@@ -41,19 +68,68 @@ func (m *Mpesa) SetDefaultTimeOut(timeOut time.Duration) {
 //at runtime.
 func (m *Mpesa) SetMode(mode bool) {
 	m.Live = mode
-
 }
 
-func (m *Mpesa) StkPushRequest(body StKPushRequestBody, passKey string) (*StkPushResult, error) {
-	if body.Timestamp == "" {
-		t := time.Now()
-		fTime := t.Format("20060102150405")
-		body.Timestamp = fTime
-		body.Password = GeneratePassword(body.BusinessShortCode, passKey, fTime)
+//StkPushRequest send an Mpesa express request
+//note if you have already set a DefaultPassKey you don't have to pass
+//a pass key here its optional
+//If you also set DefaultC2BShortCode you dont have to pass BusinessShortCode to the StKPushRequestBody
+//the default will be used if you don't pass it
+func (m *Mpesa) StkPushRequest(body StKPushRequestBody, passKey ...string) (*StkPushResult, error) {
+	var stkPassKey string
+	if len(passKey) > 0 {
+		stkPassKey = passKey[0]
+	} else {
+		stkPassKey = m.DefaultPassKey
 	}
-	body.TransactionType = CustomerPayBillOnline
+	if IsEmpty(stkPassKey) {
+		return nil, errors.New("pass key is needed set a default pass key or pass it in ths function")
+	}
+	if IsEmpty(body.BusinessShortCode) {
+		body.BusinessShortCode = m.DefaultC2BShortCode
+	}
+	err := body.Validate()
+	if err != nil {
+		return nil, err
+	}
+	t := time.Now()
+	fTime := t.Format("20060102150405")
+	requestBody := StkRequestFullBody{
+		StKPushRequestBody: body,
+		Password:           GeneratePassword(body.BusinessShortCode, stkPassKey, fTime),
+		Timestamp:          fTime,
+		TransactionType:    CustomerPayBillOnline,
+		PartyA:             body.PhoneNumber,
+		PartyB:             body.BusinessShortCode,
+	}
 	var stkPushResult StkPushResult
-	err := m.sendAndProcessStkPushRequest(m.getStkPush(), body, &stkPushResult, nil)
+	err = m.sendAndProcessStkPushRequest(m.getStkPush(), requestBody, &stkPushResult, nil)
+	return &stkPushResult, err
+}
+
+//StkPushQuery use this to confirm your stk push if it was a failure or success
+//CheckoutRequestID is the CheckoutRequestID you got when you sent the StkPushRequest request
+//you dont have to send a passkey if you have a DefaultPassKey set
+func (m *Mpesa) StkPushQuery(CheckoutRequestID string, BusinessShortCode string, passKey ...string) (*StkPushQueryResponseBody, error) {
+	var stkPassKey string
+	if len(passKey) > 0 {
+		stkPassKey = passKey[0]
+	} else {
+		stkPassKey = m.DefaultPassKey
+	}
+	if IsEmpty(stkPassKey) {
+		return nil, errors.New("pass key is needed set a default pass key or pass it in ths function")
+	}
+	t := time.Now()
+	fTime := t.Format("20060102150405")
+	body := StkPushQueryRequestBody{
+		BusinessShortCode: BusinessShortCode,
+		Password:          GeneratePassword(BusinessShortCode, stkPassKey, fTime),
+		Timestamp:         fTime,
+		CheckoutRequestID: CheckoutRequestID,
+	}
+	var stkPushResult StkPushQueryResponseBody
+	err := m.sendAndProcessStkPushRequest(m.getStkPushQuery(), body, &stkPushResult, nil)
 	return &stkPushResult, err
 }
 
@@ -62,9 +138,7 @@ func (m *Mpesa) sendAndProcessStkPushRequest(url string, data interface{}, respI
 		log.Println("not a pointer")
 
 		return errors.New("response should be a pointer")
-
 	}
-
 	token, err := m.GetAccessToken()
 	if err != nil {
 
@@ -81,7 +155,7 @@ func (m *Mpesa) sendAndProcessStkPushRequest(url string, data interface{}, respI
 	for k, v := range extraHeader {
 		headers[k] = v
 	}
-	resp, err := postRequest(url, data, headers,m.DefaultTimeOut)
+	resp, err := postRequest(url, data, headers, m.DefaultTimeOut)
 	if err != nil {
 
 		return err
@@ -140,7 +214,7 @@ func (m *Mpesa) GetAccessToken() (*AccessTokenResponse, error) {
 	return &token, nil
 }
 
-func postRequest(url string, data interface{}, headers map[string]string,timeOut time.Duration) (*http.Response, error) {
+func postRequest(url string, data interface{}, headers map[string]string, timeOut time.Duration) (*http.Response, error) {
 
 	b, err := json.Marshal(data)
 	if err != nil {
@@ -162,7 +236,7 @@ func postRequest(url string, data interface{}, headers map[string]string,timeOut
 
 }
 
-func getRequest(url string, headers map[string]string, queryParameters map[string]string,timeOut time.Duration) (*http.Response, error) {
+func getRequest(context context.Context, url string, headers map[string]string, queryParameters map[string]string, timeOut time.Duration) (*http.Response, error) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
@@ -179,6 +253,7 @@ func getRequest(url string, headers map[string]string, queryParameters map[strin
 	}
 
 	client := &http.Client{
+
 		Timeout: timeOut,
 	}
 	return client.Do(req)
