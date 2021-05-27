@@ -107,10 +107,10 @@ func (m *Mpesa) StkPushRequest(body StKPushRequestBody, passKey ...string) (*Stk
 	return &stkPushResult, err
 }
 
-//StkPushQuery use this to confirm your stk push if it was a failure or success
+//StkPushVerification use this to confirm your stk push if it was a failure or success
 //CheckoutRequestID is the CheckoutRequestID you got when you sent the StkPushRequest request
 //you dont have to send a passkey if you have a DefaultPassKey set
-func (m *Mpesa) StkPushQuery(CheckoutRequestID string, BusinessShortCode string, passKey ...string) (*StkPushQueryResponseBody, error) {
+func (m *Mpesa) StkPushVerification(CheckoutRequestID string, BusinessShortCode string, passKey ...string) (*StkPushQueryResponseBody, error) {
 	var stkPassKey string
 	if len(passKey) > 0 {
 		stkPassKey = passKey[0]

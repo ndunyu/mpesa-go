@@ -4,3 +4,5 @@ github.com/ndunyu/mpesa-go v0.0.0-20210527070637-adc0aa2ce032 h1:2NbEfuE/7TLgzc3
 github.com/ndunyu/mpesa-go v0.0.0-20210527070637-adc0aa2ce032/go.mod h1:FGe4hnqmkk3Yor1OkD6SYT1FgJ6dFTh+jJQ+qXmB5kA=
 github.com/ndunyu/mpesa-go v0.0.0-20210527073126-71795bc3cf5a h1:HDgbaCEaQutKy9bALft5QUujZtYBtnFUyhJUX9b2wJo=
 github.com/ndunyu/mpesa-go v0.0.0-20210527073126-71795bc3cf5a/go.mod h1:FGe4hnqmkk3Yor1OkD6SYT1FgJ6dFTh+jJQ+qXmB5kA=
+github.com/ndunyu/mpesa-go v0.0.0-20210527074024-17631b105193 h1:6uKjtFrvjFFiQ8KYMArRJXk2t19oHOMRTIf+CFZUK98=
+github.com/ndunyu/mpesa-go v0.0.0-20210527074024-17631b105193/go.mod h1:FGe4hnqmkk3Yor1OkD6SYT1FgJ6dFTh+jJQ+qXmB5kA=

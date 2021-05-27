@@ -1,6 +1,7 @@
 package examples
 
 import (
+	"encoding/json"
 	mpesa_go "github.com/ndunyu/mpesa-go"
 	"log"
 	"net/http"
@@ -51,8 +52,31 @@ func MpesaExpressExample() {
 
 
 func ExampleProcessingMpesaExpressCallBack(w http.ResponseWriter, r *http.Request) {
-	var stkPushResponseBody mpesa_go
+	var stkPushResponseBody mpesa_go.StkPushCallBackResponseBody
+	err := json.NewDecoder(r.Body).Decode(&stkPushResponseBody)
+	if err != nil {
+		log.Println(err)
+		///sentry.CaptureException(err)
+		http.Error(w,"something went wrong",400)
+		return
+	}
+	defer r.Body.Close()
+	if stkPushResponseBody.Body.StkCallback.ResultCode != 0 {
+		///this request has failed
+		///mark it as failed in the database or something
+		//like that
+		w.WriteHeader(200)
+		return
+	}
 
+	//otherwise Resultcode is 0 so it is a success
+    //It is always wise to send a verification request to
+    //confirm that it is true that this request was actually a success
+    //just to double check
+    //for that you can use the verification api
+    mpesa:=mpesa_go.New("consumerkey","consumersecret",true)
+
+    mpesa.StkPushQuery()
 
 
 }
