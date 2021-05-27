@@ -17,6 +17,7 @@ func MpesaExpressExample() {
 	mpesa.SetDefaultPassKey("PASSKEY")
 	mpesa.SetDefaultB2CShortCode("MPESASHORTCODE")
 
+
 	//For this request I do not pass a passKey since I already
 	//set a DefaultPassKey if you did not set it you should pass a passkey as the second
 	//parameter as a second argument

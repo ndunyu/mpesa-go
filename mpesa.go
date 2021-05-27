@@ -6,8 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/patrickmn/go-cache"
-	"go/constant"
+
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -39,11 +38,11 @@ type Mpesa struct {
 	//you are sending a request
 	//this is ideal for those using a single shortcode
 	DefaultC2BShortCode string
-	TokenCache    map[string]AccessTokenResponse
+	cache               map[string]AccessTokenResponse
 }
 
 func New(ConsumerKey, ConsumerSecret string, live bool) Mpesa {
-	TokenCache := cache.New(50*time.Minute, 50*time.Minute)
+	TokenCache := make(map[string]AccessTokenResponse)
 	return Mpesa{
 		Live:             live,
 		ConsumerKey:      ConsumerKey,
@@ -53,7 +52,6 @@ func New(ConsumerKey, ConsumerSecret string, live bool) Mpesa {
 		cache:            TokenCache,
 	}
 }
-
 func (m *Mpesa) ShouldCacheAccessToken(shouldCache bool) {
 	m.CacheAccessToken = shouldCache
 }
@@ -195,6 +193,19 @@ func (m *Mpesa) sendAndProcessStkPushRequest(url string, data interface{}, respI
 
 //GetAccessToken will get the token to be used to query data
 func (m *Mpesa) GetAccessToken() (*AccessTokenResponse, error) {
+	if m.cache == nil {
+		m.cache = make(map[string]AccessTokenResponse)
+	}
+	//check if we have a cached Token and return it instead
+	//if we have allowed caching
+	if m.CacheAccessToken {
+		if val, ok := m.cache[AccessToken]; ok {
+			///we have a token so check if it is expired
+			if val.ExpireTime.Sub(time.Now()).Minutes() > 0 {
+				return &val, nil
+			}
+		}
+	}
 	req, err := http.NewRequest(http.MethodGet, m.getAccessTokenUrl(), nil)
 	if err != nil {
 		return nil, err
@@ -227,15 +238,14 @@ func (m *Mpesa) GetAccessToken() (*AccessTokenResponse, error) {
 	}
 
 	if m.cache == nil {
-		m.cache = cache.New(50*time.Minute, 50*time.Minute)
+		m.cache = make(map[string]AccessTokenResponse)
 
 	}
-	if m.CacheAccessToken{
-      //cache the token
-		m.cache.Set(AccessToken,token.)
-		m.cache.Get()
+	if m.CacheAccessToken {
+		//cache the token
+		token.ExpireTime = time.Now().Add(time.Minute * 50)
+		m.cache[AccessToken] = token
 	}
-
 	return &token, nil
 }
 
