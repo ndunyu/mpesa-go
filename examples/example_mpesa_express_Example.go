@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"time"
 )
-
 func MpesaExpressExample() {
 	//NOTE it easy to create only one mpesa object per app
 	//and use it though out you app
