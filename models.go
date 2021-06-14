@@ -84,6 +84,34 @@ func (s *B2CRequestBody) Validate() error {
 
 
 
+type B2CCallBackData struct {
+	Result Result `json:"Result"`
+}
+type ResultParameter struct {
+	Key   string `json:"Key"`
+	Value string `json:"Value"`
+}
+type ResultParameters struct {
+	ResultParameter []ResultParameter `json:"ResultParameter"`
+}
+type Result struct {
+	ResultType               int              `json:"ResultType"`
+	ResultCode               int              `json:"ResultCode"`
+	ResultDesc               string           `json:"ResultDesc"`
+	OriginatorConversationID string           `json:"OriginatorConversationID"`
+	ConversationID           string           `json:"ConversationID"`
+	TransactionID            string           `json:"TransactionID"`
+	ResultParameters         ResultParameters `json:"ResultParameters"`
+}
+
+
+
+
+
+
+
+
+
 
 
 
