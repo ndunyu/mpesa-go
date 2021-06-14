@@ -29,7 +29,7 @@ func MpesaInitialization() {
 	mpesa.SetDefaultB2CShortCode("MPESASHORTCODE")
 }
 
-func MpesaInitializationExampleTwo(){
+func MpesaInitializationExampleTwo() {
 	//Example two
 	//you can also initialize an mpesa object like below
 	//the problem with this is that you might forget to pass a consumerKey
@@ -43,7 +43,7 @@ func MpesaInitializationExampleTwo(){
 		DefaultTimeOut:      10 * time.Second,
 		DefaultPassKey:      "",
 		DefaultC2BShortCode: "",
-		CacheAccessToken: true,
+		CacheAccessToken:    true,
 	}
 
 	//

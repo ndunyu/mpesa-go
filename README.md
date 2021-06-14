@@ -1,7 +1,9 @@
 # mpesa-go
+
 A golang sdk for safaricom Mpesa
 
 ## Quickstart
+
 ```go
 
 // MpesaInitialization  show how to create an mpesa object to use through out your app
@@ -33,6 +35,7 @@ func MpesaInitialization() {
 
 }
 ```
+
 You can also initialize an mpesa object like below.
 
 ```go
@@ -58,11 +61,14 @@ func MpesaInitializationExampleTwo(){
 
 }
 ```
-## Example of using the Mpesa Express Api
-For this api PassKey is optional if you already set a  DefaultPassKey when initializing your
-Mpesa Object.
 
-If you want to use another pass key for this request or you have not set a default one remember to pass a passkey as a second argument.
+## Example of using the Mpesa Express Api
+
+For this api PassKey is optional if you already set a DefaultPassKey when initializing your Mpesa Object.
+
+If you want to use another pass key for this request or you have not set a default one remember to pass a passkey as a
+second argument.
+
 ```go
 func MpesaExpressExample() {
 	//NOTE it easy to create only one mpesa object per app
@@ -107,14 +113,16 @@ func MpesaExpressExample() {
 
 }
 ```
+
 ## How to process the received Mpesa Express callback data
+
 As you can recall we sent a calback url when sending the mpesa express request.
 
-Safaricom send the response to this endpoint.Below example  shows how you can process the received data.
+Safaricom send the response to this endpoint.Below example shows how you can process the received data.
 
 Note when you receive this response always use the verification api to verify the result.
 
-The  mpesa_go.StkPushCallBackResponseBody also has mpesaRef and other data that you should remember to process
+The mpesa_go.StkPushCallBackResponseBody also has mpesaRef and other data that you should remember to process
 
 ```go
 

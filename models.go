@@ -38,6 +38,7 @@ type B2CRequestBody struct {
 	//Optional
 	Occassion string
 }
+
 func (s *B2CRequestBody) Validate() error {
 	if IsEmpty(s.PartyA) {
 		return errors.New("business short code is required")
@@ -51,24 +52,23 @@ func (s *B2CRequestBody) Validate() error {
 
 	}
 	if IsEmpty(s.CommandID) {
-		return  errors.New("command id is required")
+		return errors.New("command id is required")
 	}
 
 	if IsEmpty(s.InitiatorName) {
-		return  errors.New("initiator name is required")
+		return errors.New("initiator name is required")
 	}
 
 	if IsEmpty(s.ResultURL) {
-		return  errors.New("result url  is required")
+		return errors.New("result url  is required")
 	}
 	if IsEmpty(s.QueueTimeOutURL) {
-		return  errors.New("QueueTimeOutURL  is required")
+		return errors.New("QueueTimeOutURL  is required")
 	}
 
 	if IsEmpty(s.Remarks) {
-		return  errors.New("remark  is required")
+		return errors.New("remark  is required")
 	}
-
 
 	//validate amount
 	i, err := strconv.Atoi(s.Amount)
@@ -82,13 +82,11 @@ func (s *B2CRequestBody) Validate() error {
 	return nil
 }
 
-
-
 type B2CCallBackData struct {
 	Result Result `json:"Result"`
 }
 type ResultParameter struct {
-	Key   string `json:"Key"`
+	Key   string      `json:"Key"`
 	Value interface{} `json:"Value"`
 }
 type ResultParameters struct {
@@ -103,17 +101,6 @@ type Result struct {
 	TransactionID            string           `json:"TransactionID"`
 	ResultParameters         ResultParameters `json:"ResultParameters"`
 }
-
-
-
-
-
-
-
-
-
-
-
 
 // MpesaResult is returned by every mpesa api
 // Here

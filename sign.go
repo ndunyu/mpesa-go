@@ -6,7 +6,7 @@ import (
 )
 
 func GeneratePassword(shortCode, passkey, time string) string {
-	password := fmt.Sprintf("%s%s%s", shortCode,passkey, time)
+	password := fmt.Sprintf("%s%s%s", shortCode, passkey, time)
 	return base64.StdEncoding.EncodeToString([]byte(password))
 
 }

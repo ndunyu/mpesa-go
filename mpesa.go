@@ -116,7 +116,7 @@ func (m *Mpesa) B2CRequest(b2c B2CRequestBody) (*MpesaResult, error) {
 		return nil, err
 	}
 	var mpesaResult MpesaResult
-	err = m.sendAndProcessStkPushRequest(m.getB2CUrl(), b2c, &mpesaResult, nil,true)
+	err = m.sendAndProcessStkPushRequest(m.getB2CUrl(), b2c, &mpesaResult, nil, true)
 
 	return &mpesaResult, err
 
@@ -155,7 +155,7 @@ func (m *Mpesa) StkPushRequest(body StKPushRequestBody, passKey ...string) (*Stk
 		PartyB:             body.BusinessShortCode,
 	}
 	var stkPushResult StkPushResult
-	err = m.sendAndProcessStkPushRequest(m.getStkPush(), requestBody, &stkPushResult, nil,false)
+	err = m.sendAndProcessStkPushRequest(m.getStkPush(), requestBody, &stkPushResult, nil, false)
 	return &stkPushResult, err
 }
 
@@ -181,7 +181,7 @@ func (m *Mpesa) StkPushVerification(CheckoutRequestID string, BusinessShortCode 
 		CheckoutRequestID: CheckoutRequestID,
 	}
 	var stkPushResult StkPushQueryResponseBody
-	err := m.sendAndProcessStkPushRequest(m.getStkPushQuery(), body, &stkPushResult, nil,false)
+	err := m.sendAndProcessStkPushRequest(m.getStkPushQuery(), body, &stkPushResult, nil, false)
 	return &stkPushResult, err
 }
 
@@ -238,7 +238,6 @@ func (m *Mpesa) sendAndProcessStkPushRequest(url string, data interface{}, respI
 		b, _ := ioutil.ReadAll(resp.Body)
 
 		return &RequestError{Message: string(b), StatusCode: resp.StatusCode}
-
 	}
 
 	///var respe map[string]interface{}
