@@ -89,7 +89,7 @@ type B2CCallBackData struct {
 }
 type ResultParameter struct {
 	Key   string `json:"Key"`
-	Value string `json:"Value"`
+	Value interface{} `json:"Value"`
 }
 type ResultParameters struct {
 	ResultParameter []ResultParameter `json:"ResultParameter"`
