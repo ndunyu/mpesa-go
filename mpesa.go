@@ -38,7 +38,15 @@ type Mpesa struct {
 	//you are sending a request
 	//this is ideal for those using a single shortcode
 	DefaultC2BShortCode string
-	cache               map[string]AccessTokenResponse
+	DefaultB2CShortCode string
+
+	///for b2c
+	DefaultInitiatorName string
+
+	///for b2c
+	DefaultSecurityCredential string
+
+	cache map[string]AccessTokenResponse
 }
 
 func New(ConsumerKey, ConsumerSecret string, live bool) Mpesa {
@@ -77,10 +85,37 @@ func (m *Mpesa) SetDefaultTimeOut(timeOut time.Duration) {
 	m.DefaultTimeOut = timeOut
 }
 
-// SetMode  changes from production to sandbox and viceversa
+// SetLiveMode  changes from production to sandbox and viceversa
 //at runtime.
 func (m *Mpesa) SetLiveMode(mode bool) {
 	m.Live = mode
+}
+
+// B2CRequest Sends Money from a business to the Customer
+func (m *Mpesa) B2CRequest(b2c B2CRequestBody) (*MpesaResult, error) {
+	if b2c.CommandID == "" {
+
+		b2c.CommandID = BusinessPayment
+	}
+	if IsEmpty(b2c.PartyA) {
+		b2c.PartyA=m.DefaultB2CShortCode
+
+	}
+	if IsEmpty(b2c.InitiatorName) {
+		b2c.InitiatorName=m.DefaultInitiatorName
+	}
+	if IsEmpty(b2c.SecurityCredential) {
+		b2c.SecurityCredential=m.DefaultSecurityCredential
+	}
+	err := b2c.Validate()
+	if err != nil {
+		return nil,err
+	}
+	var mpesaResult MpesaResult
+	err = m.sendAndProcessStkPushRequest(m.getB2CUrl(), b2c, &mpesaResult, nil)
+
+	return &mpesaResult,err
+
 }
 
 //StkPushRequest send an Mpesa express request
@@ -157,7 +192,6 @@ func (m *Mpesa) sendAndProcessStkPushRequest(url string, data interface{}, respI
 
 		return err
 	}
-	log.Println(token.AccessToken)
 	headers := make(map[string]string)
 	headers["Content-Type"] = "application/json"
 	///auth := "Bearer " + token.AccessToken

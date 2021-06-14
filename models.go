@@ -2,11 +2,102 @@ package mpesa_go
 
 import (
 	"errors"
+	"log"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 )
+
+type B2CRequestBody struct {
+	//This is the credential/username used to authenticate the transaction request.
+	InitiatorName string
+
+	///Base64 encoded string of the B2C short code and password,
+	//which is encrypted using M-Pesa public key and validates the
+	//transaction on M-Pesa Core system.
+	SecurityCredential string
+	//Unique command for each transaction type e.g.
+	//SalaryPayment, BusinessPayment, PromotionPayment
+	CommandID string
+	//The amount being transacted
+	Amount string
+	//Organization’s shortcode
+	//initiating the transaction.
+	PartyA string
+	//Phone number receiving the transaction
+	PartyB string
+	//Comments that are sent along with the transaction.
+	Remarks string
+	//The timeout end-point that receives
+	//a timeout response.
+	QueueTimeOutURL string
+	//The end-point that receives
+	//the response of the transaction
+	ResultURL string
+	//Optional
+	Occassion string
+}
+func (s *B2CRequestBody) Validate() error {
+	if IsEmpty(s.PartyA) {
+		return errors.New("business short code is required")
+	}
+
+	if IsEmpty(s.Amount) {
+		return errors.New("amount is required")
+	}
+	if IsEmpty(s.PartyB) {
+		return errors.New("phone number is required")
+
+	}
+	if IsEmpty(s.CommandID) {
+		return  errors.New("command id is required")
+	}
+
+	if IsEmpty(s.InitiatorName) {
+		return  errors.New("initiator name is required")
+	}
+
+	if IsEmpty(s.ResultURL) {
+		return  errors.New("result url  is required")
+	}
+	if IsEmpty(s.QueueTimeOutURL) {
+		return  errors.New("QueueTimeOutURL  is required")
+	}
+
+	if IsEmpty(s.Remarks) {
+		return  errors.New("remark  is required")
+	}
+
+
+	//validate amount
+	i, err := strconv.Atoi(s.Amount)
+	if err != nil || i < 1 {
+		return errors.New("amount should be a string number that is greater than 0")
+	}
+	log.Println(s.PartyB)
+	if !CheckKenyaInternationalPhoneNumber(s.PartyB) {
+		return errors.New("the phone number should be in the format 254000000000 i.e(254 followed by 9 digits)")
+	}
+	return nil
+}
+
+
+
+
+
+
+// MpesaResult is returned by every mpesa api
+// Here
+// i.e that is when we call Mpesa.sendAndProcessMpesaRequest
+type MpesaResult struct {
+	ConversationID          string `json:"ConversationID"`
+	OriginatorCoversationID string `json:"OriginatorCoversationID"`
+	/// OriginatorConversationID string `json:"OriginatorConversationID"`
+	ResponseCode        string `json:"ResponseCode"`
+	ResponseDescription string `json:"ResponseDescription"`
+	///ResponseDescription      string `json:"ResponseDescription"`
+}
 
 //Start of Mpesa express models<-----------------------------------------------
 
@@ -23,9 +114,6 @@ type StkRequestFullBody struct {
 	///receiver shortcode
 	PartyB string
 }
-
-
-
 
 type StKPushRequestBody struct {
 	BusinessShortCode string
@@ -59,7 +147,7 @@ func (s *StKPushRequestBody) Validate() error {
 	if err != nil || i < 1 {
 		return errors.New("amount should be a string number that is greater than 0")
 	}
-	if CheckKenyaInternationalPhoneNumber(s.PhoneNumber) {
+	if !CheckKenyaInternationalPhoneNumber(s.PhoneNumber) {
 		return errors.New("the phone number should be in the format 254000000000 i.e(254 followed by 9 digits)")
 	}
 	return nil
@@ -78,26 +166,20 @@ type StkPushResult struct {
 
 // StkPushQueryRequestBody when querying for success/failure(i.e verification)
 type StkPushQueryRequestBody struct {
-	BusinessShortCode	string
-	Password	string
-	Timestamp	string
-	CheckoutRequestID	string
+	BusinessShortCode string
+	Password          string
+	Timestamp         string
+	CheckoutRequestID string
 }
-
-
-
-
-
 
 // StkPushQueryResponseBody returned when yous send mpesa express verification request
 type StkPushQueryResponseBody struct {
-	MerchantRequestID	string
-	CheckoutRequestID	string
-	ResponseCode	string
-	ResultDesc	string
-	ResponseDescription	string
-	ResultCode	string
-
+	MerchantRequestID   string
+	CheckoutRequestID   string
+	ResponseCode        string
+	ResultDesc          string
+	ResponseDescription string
+	ResultCode          string
 }
 
 type StkPushCallBackResponseBody struct {
@@ -120,19 +202,18 @@ type CallbackMetadata struct {
 	Item []Item `json:"Item"`
 }
 type Item struct {
-	Name  string `json:"Name"`
-	Value interface{}   `json:"Value,omitempty"`
+	Name  string      `json:"Name"`
+	Value interface{} `json:"Value,omitempty"`
 }
-
 
 //End of Mpesa express models<-----------------------------------------------
 
 //Start of Token Model-------------------------------------------
 
 type AccessTokenResponse struct {
-	AccessToken string `json:"access_token"`
-	ExpiresIn   string `json:"expires_in"`
-	ExpireTime   time.Time `json:"expire_time"`
+	AccessToken string    `json:"access_token"`
+	ExpiresIn   string    `json:"expires_in"`
+	ExpireTime  time.Time `json:"expire_time"`
 }
 
 //End of access  token<-----------------------------------------------
