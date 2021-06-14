@@ -181,6 +181,21 @@ func (m *Mpesa) StkPushVerification(CheckoutRequestID string, BusinessShortCode 
 	return &stkPushResult, err
 }
 
+
+func (m *Mpesa)StkPushQuery(body StkPushQueryRequestBody,passKey string)(*StkPushQueryResponseBody, error){
+
+	if body.Timestamp=="" {
+		t := time.Now()
+		fTime := t.Format("20060102150405")
+		body.Timestamp= fTime
+		body.Password=GeneratePassword(body.BusinessShortCode,passKey, fTime)
+	}
+
+	var stkPushResult StkPushQueryResponseBody
+	err:=m.sendAndProcessStkPushRequest(m.getStkPushQuery(),body,&stkPushResult,nil)
+	return  &stkPushResult,err
+}
+
 func (m *Mpesa) sendAndProcessStkPushRequest(url string, data interface{}, respItem interface{}, extraHeader map[string]string) error {
 	if reflect.ValueOf(respItem).Kind() != reflect.Ptr {
 		log.Println("not a pointer")
