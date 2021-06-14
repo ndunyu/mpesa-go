@@ -182,13 +182,21 @@ func (m *Mpesa) StkPushVerification(CheckoutRequestID string, BusinessShortCode 
 }
 
 
-func (m *Mpesa)StkPushQuery(body StkPushQueryRequestBody,passKey string)(*StkPushQueryResponseBody, error){
-
+func (m *Mpesa)StkPushQuery(body StkPushQueryRequestBody,passKey ...string)(*StkPushQueryResponseBody, error){
+	var stkPassKey string
+	if len(passKey) > 0 {
+		stkPassKey = passKey[0]
+	} else {
+		stkPassKey = m.DefaultPassKey
+	}
+	if IsEmpty(stkPassKey) {
+		return nil, errors.New("pass key is needed set a default pass key or pass it in ths function")
+	}
 	if body.Timestamp=="" {
 		t := time.Now()
 		fTime := t.Format("20060102150405")
 		body.Timestamp= fTime
-		body.Password=GeneratePassword(body.BusinessShortCode,passKey, fTime)
+		body.Password=GeneratePassword(body.BusinessShortCode,stkPassKey, fTime)
 	}
 
 	var stkPushResult StkPushQueryResponseBody
