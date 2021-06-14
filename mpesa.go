@@ -279,8 +279,11 @@ func (m *Mpesa) GetAccessToken(useB2c bool) (*AccessTokenResponse, error) {
 		return nil, err
 	}
 	log.Println(req.URL.String())
-
-	req.SetBasicAuth(m.ConsumerKey, m.ConsumerSecret)
+	if useB2c {
+		req.SetBasicAuth(m.DefaultB2CConsumer, m.DefaultB2CSecret)
+	} else {
+		req.SetBasicAuth(m.ConsumerKey, m.ConsumerSecret)
+	}
 
 	req.Header.Add("Accept", "application/json")
 	req.Header.Set("Accept", "application/json")
