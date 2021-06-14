@@ -17,6 +17,7 @@ const PayBillIdentifier="4"
 const TillNumberIdentifier="2"
 const MSISDNIdentifier="1"
 const AccessToken = "access_token"
+const B2CAccessToken = "B2c_access_token"
 
 
 ///mpesa types

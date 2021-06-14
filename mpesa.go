@@ -47,6 +47,10 @@ type Mpesa struct {
 	DefaultSecurityCredential string
 
 	cache map[string]AccessTokenResponse
+
+	////unnecessary
+	DefaultB2CConsumer string
+	DefaultB2CSecret   string
 }
 
 func New(ConsumerKey, ConsumerSecret string, live bool) Mpesa {
@@ -98,23 +102,23 @@ func (m *Mpesa) B2CRequest(b2c B2CRequestBody) (*MpesaResult, error) {
 		b2c.CommandID = BusinessPayment
 	}
 	if IsEmpty(b2c.PartyA) {
-		b2c.PartyA=m.DefaultB2CShortCode
+		b2c.PartyA = m.DefaultB2CShortCode
 
 	}
 	if IsEmpty(b2c.InitiatorName) {
-		b2c.InitiatorName=m.DefaultInitiatorName
+		b2c.InitiatorName = m.DefaultInitiatorName
 	}
 	if IsEmpty(b2c.SecurityCredential) {
-		b2c.SecurityCredential=m.DefaultSecurityCredential
+		b2c.SecurityCredential = m.DefaultSecurityCredential
 	}
 	err := b2c.Validate()
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 	var mpesaResult MpesaResult
-	err = m.sendAndProcessStkPushRequest(m.getB2CUrl(), b2c, &mpesaResult, nil)
+	err = m.sendAndProcessStkPushRequest(m.getB2CUrl(), b2c, &mpesaResult, nil,true)
 
-	return &mpesaResult,err
+	return &mpesaResult, err
 
 }
 
@@ -151,7 +155,7 @@ func (m *Mpesa) StkPushRequest(body StKPushRequestBody, passKey ...string) (*Stk
 		PartyB:             body.BusinessShortCode,
 	}
 	var stkPushResult StkPushResult
-	err = m.sendAndProcessStkPushRequest(m.getStkPush(), requestBody, &stkPushResult, nil)
+	err = m.sendAndProcessStkPushRequest(m.getStkPush(), requestBody, &stkPushResult, nil,false)
 	return &stkPushResult, err
 }
 
@@ -177,12 +181,11 @@ func (m *Mpesa) StkPushVerification(CheckoutRequestID string, BusinessShortCode 
 		CheckoutRequestID: CheckoutRequestID,
 	}
 	var stkPushResult StkPushQueryResponseBody
-	err := m.sendAndProcessStkPushRequest(m.getStkPushQuery(), body, &stkPushResult, nil)
+	err := m.sendAndProcessStkPushRequest(m.getStkPushQuery(), body, &stkPushResult, nil,false)
 	return &stkPushResult, err
 }
 
-
-func (m *Mpesa)StkPushQuery(body StkPushQueryRequestBody,passKey ...string)(*StkPushQueryResponseBody, error){
+func (m *Mpesa) StkPushQuery(body StkPushQueryRequestBody, passKey ...string) (*StkPushQueryResponseBody, error) {
 	var stkPassKey string
 	if len(passKey) > 0 {
 		stkPassKey = passKey[0]
@@ -192,25 +195,25 @@ func (m *Mpesa)StkPushQuery(body StkPushQueryRequestBody,passKey ...string)(*Stk
 	if IsEmpty(stkPassKey) {
 		return nil, errors.New("pass key is needed set a default pass key or pass it in ths function")
 	}
-	if body.Timestamp=="" {
+	if body.Timestamp == "" {
 		t := time.Now()
 		fTime := t.Format("20060102150405")
-		body.Timestamp= fTime
-		body.Password=GeneratePassword(body.BusinessShortCode,stkPassKey, fTime)
+		body.Timestamp = fTime
+		body.Password = GeneratePassword(body.BusinessShortCode, stkPassKey, fTime)
 	}
 
 	var stkPushResult StkPushQueryResponseBody
-	err:=m.sendAndProcessStkPushRequest(m.getStkPushQuery(),body,&stkPushResult,nil)
-	return  &stkPushResult,err
+	err := m.sendAndProcessStkPushRequest(m.getStkPushQuery(), body, &stkPushResult, nil, false)
+	return &stkPushResult, err
 }
 
-func (m *Mpesa) sendAndProcessStkPushRequest(url string, data interface{}, respItem interface{}, extraHeader map[string]string) error {
+func (m *Mpesa) sendAndProcessStkPushRequest(url string, data interface{}, respItem interface{}, extraHeader map[string]string, useB2C bool) error {
 	if reflect.ValueOf(respItem).Kind() != reflect.Ptr {
 		log.Println("not a pointer")
 
 		return errors.New("response should be a pointer")
 	}
-	token, err := m.GetAccessToken()
+	token, err := m.GetAccessToken(useB2C)
 	if err != nil {
 
 		return err
@@ -249,13 +252,13 @@ func (m *Mpesa) sendAndProcessStkPushRequest(url string, data interface{}, respI
 }
 
 //GetAccessToken will get the token to be used to query data
-func (m *Mpesa) GetAccessToken() (*AccessTokenResponse, error) {
+func (m *Mpesa) GetAccessToken(useB2c bool) (*AccessTokenResponse, error) {
 	if m.cache == nil {
 		m.cache = make(map[string]AccessTokenResponse)
 	}
 	//check if we have a cached Token and return it instead
 	//if we have allowed caching
-	if m.CacheAccessToken {
+	if m.CacheAccessToken && !useB2c {
 		if val, ok := m.cache[AccessToken]; ok {
 			///we have a token so check if it is expired
 			if val.ExpireTime.Sub(time.Now()).Minutes() > 0 {
@@ -263,6 +266,15 @@ func (m *Mpesa) GetAccessToken() (*AccessTokenResponse, error) {
 			}
 		}
 	}
+	if m.CacheAccessToken && useB2c {
+		if val, ok := m.cache[B2CAccessToken]; ok {
+			///we have a token so check if it is expired
+			if val.ExpireTime.Sub(time.Now()).Minutes() > 0 {
+				return &val, nil
+			}
+		}
+	}
+
 	req, err := http.NewRequest(http.MethodGet, m.getAccessTokenUrl(), nil)
 	if err != nil {
 		return nil, err
@@ -301,7 +313,12 @@ func (m *Mpesa) GetAccessToken() (*AccessTokenResponse, error) {
 	if m.CacheAccessToken {
 		//cache the token
 		token.ExpireTime = time.Now().Add(time.Minute * 50)
-		m.cache[AccessToken] = token
+		if useB2c {
+			m.cache[B2CAccessToken] = token
+		} else {
+			m.cache[AccessToken] = token
+		}
+
 	}
 	return &token, nil
 }
